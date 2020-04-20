@@ -4,6 +4,7 @@ on:
         branches:
           - master
 jobs:
+    if: "!contains(github.event.head_commit.message, 'skipCI')"
     build:
         runs-on: ubuntu-latest
         steps:
