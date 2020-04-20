@@ -1,0 +1,61 @@
+name: deploy
+on:
+    push:
+        branches:
+            - master
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Check out code
+              uses: actions/checkout@v2
+            - name: Parse the version number
+              run: |
+                  cd $GITHUB_WORKSPACE
+                  echo ::set-env name=VERSION::$(<version.md)
+            - name: Configure git for private modules
+              env:
+                  TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+              run: git config --global url."https://tok-kkk:${TOKEN}@github.com".insteadOf "https://github.com"
+            - name: Check out darknode release branch
+              uses: actions/checkout@v2
+              with:
+                  repository: renproject/darknode
+                  token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+                  ref: release/${{ env.VERSION }}
+                  path: darknode
+            - name: Build
+              run: |
+                  cd darknode
+                  make package
+            - name: Create Release
+              id: create_release
+              uses: actions/create-release@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  tag_name: v${{ env.VERSION }}
+                  release_name: Release ${{ env.VERSION}}
+                  draft: false
+                  prerelease: false
+            - name: Upload Release Asset
+              uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ steps.create_release.outputs.upload_url }}
+                  asset_path: darknode/deploy/bin/darknode
+                  asset_name: darknode
+                  asset_content_type: application/octet-stream
+            - name: Upload Release Asset
+              uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ steps.create_release.outputs.upload_url }}
+                  asset_path: darknode/deploy/bin/migration
+                  asset_name: migration
+                  asset_content_type: application/octet-stream
+
+
+
