@@ -1,7 +1,9 @@
 # darknode-release
 Repo for publishing darknode releases before the `darknode` repo is public
 
-# Usage (say you want to publish a new release x.y.z)
+# Usage 
+
+Say you want to publish a new release `x.y.z`. Following the steps below
 1. Make sure there exists a `release/x.y.z` branch in darknode repo and its latest commit is the one we want to deploy 
 2. Update the content of `version.md` file to `x.y.z`
 3. Push the change to master
