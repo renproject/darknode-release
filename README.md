@@ -11,5 +11,4 @@ Say you want to publish a new release `x.y.z`. Following the steps below
 5. Update darknode by `darknode update DARKNODE-NAME` or `darknode update --tags DARKNODE-TAG`
 
 # Skip CI
-If you want to update the README file or push something without triggering the CI
-Include `skipCI` in your commit message, CI will be ignored with your push. 
+CI will only be trigger with commits to master. If you want to update the README file or push something without triggering the CI, include `skipCI` in your commit message, CI will be ignored with your push. 
