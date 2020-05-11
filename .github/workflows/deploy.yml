@@ -57,5 +57,3 @@ jobs:
                   asset_path: darknode/deploy/bin/migration
                   asset_name: migration
                   asset_content_type: application/octet-stream
-
-
