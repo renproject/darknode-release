@@ -6,8 +6,8 @@ jobs:
         steps:
             - name: Fetch the tag name
               run: |
-                  echo github.event.client_payload.tag
-                  echo ::set-env name=TAG::github.event.client_payload.tag
+                  echo ${{ github.event.client_payload.tag }}
+                  echo ::set-env name=TAG::${{github.event.client_payload.tag}}
             - name: Configure git for private modules
               env:
                   TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
@@ -17,7 +17,7 @@ jobs:
               with:
                   repository: renproject/darknode
                   token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-                  ref:  env.TAG
+                  ref:  ${{env.TAG}}
                   path: darknode
             - name: Build
               run: |
