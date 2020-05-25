@@ -30,11 +30,11 @@ jobs:
             - name: Build the binary
               run: |
                   cd darknode
-                  MAIN_VERSION = $(cat ./VERSION | tr -d "[:space:]")
-                  BRANCH = $(git branch | grep \* | cut -d ' ' -f2)
-                  COMMIT_HASH = $(git describe --always --long)
-                  FULL_VERSION = ${MAIN_VERSION}-${BRANCH}-${COMMIT_HASH}
-                  LDFLAGS = -s -w -X main.version=${FULL_VERSION}
+                  MAIN_VERSION=$(cat ./VERSION | tr -d "[:space:]")
+                  BRANCH=$(git branch | grep \* | cut -d ' ' -f2)
+                  COMMIT_HASH=$(git describe --always --long)
+                  FULL_VERSION=${MAIN_VERSION}-${BRANCH}-${COMMIT_HASH}
+                  LDFLAGS="-s -w -X main.version=${FULL_VERSION}"
                   go build -o darknode-linux -ldflags="${LDFLAGS}" ./cmd/darknode
             - name: Create Release
               id: create_release
