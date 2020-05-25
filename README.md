@@ -1,6 +1,6 @@
 # darknode-release
 
-Repo for publishing darknode releases before the `darknode` repo is public
+Repo for publishing darknode releases before the `darknode` repo is public. 
 
 # Usage 
 
@@ -12,7 +12,7 @@ Repo for publishing darknode releases before the `darknode` repo is public
    > Please aware the cli will not allow you to deploy an older version. The way how CLI compares versions is (1) compare the semver (2) compare the reset string in lexical order     
 2. Commit and push the change to master branch 
 3. Wait for the CI to pass. 
-4. Update darknode by `darknode update DARKNODE-NAME --version YOUR-RELEASE-NAME`
+4. Make sure your CLI has version >= 3.0.10. Update darknode by running `darknode update DARKNODE-NAME --version YOUR-RELEASE-NAME` 
 
 # Build release externally
 
