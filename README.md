@@ -22,3 +22,7 @@ CI will only be trigger with commits to master. If you want to update the README
 
 A workflow has been set up listening for new tags in darknode repo. 
 You can create a tag from the darknode repo and it will also create a new release here (release name with be same as the tag name).
+
+# Known issue
+
+- If you make a release by giving a commit hash. The binary will not be able to contain the correct branch name. (e.g. 1.0.11-HEAD-a355b0b) 
