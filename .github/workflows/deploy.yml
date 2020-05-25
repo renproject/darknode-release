@@ -3,6 +3,7 @@ on:
     push:
         branches:
           - master
+          - feat/ref
 jobs:
     build:
         if: "!contains(github.event.head_commit.message, 'skipCI')"
@@ -10,10 +11,11 @@ jobs:
         steps:
             - name: Check out code
               uses: actions/checkout@v2
-            - name: Parse the version number
+            - name: Parse the reference
               run: |
                   cd $GITHUB_WORKSPACE
-                  echo ::set-env name=VERSION::$(<version.md)
+                  echo ::set-env name=REF::$(sed -n 's/^ref=//p' var.env)
+                  echo ::set-env name=RELEASE::$(sed -n 's/^release=//p' var.env)
             - name: Configure git for private modules
               env:
                   TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
@@ -23,20 +25,25 @@ jobs:
               with:
                   repository: renproject/darknode
                   token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-                  ref: release/${{ env.VERSION }}
+                  ref: env.REF
                   path: darknode
-            - name: Build
+            - name: Build the binary
               run: |
                   cd darknode
-                  make package
+                  MAIN_VERSION = $(shell cat ./VERSION | tr -d "[:space:]")
+                  BRANCH = $(shell git branch | grep \* | cut -d ' ' -f2)
+                  COMMIT_HASH = $(shell git describe --always --long)
+                  FULL_VERSION = ${MAIN_VERSION}-${BRANCH}-${COMMIT_HASH}
+                  LDFLAGS = -s -w -X main.version=${FULL_VERSION}
+                  go build -o darknode-linux -ldflags="${LDFLAGS}" ./cmd/darknode
             - name: Create Release
               id: create_release
               uses: actions/create-release@v1
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               with:
-                  tag_name: ${{ env.VERSION }}
-                  release_name: ${{ env.VERSION }}
+                  tag_name: ${{ env.RELEASE }}
+                  release_name: ${{ env.RELEASE }}
                   draft: false
                   prerelease: false
             - name: Upload Release Asset
@@ -45,18 +52,6 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               with:
                   upload_url: ${{ steps.create_release.outputs.upload_url }}
-                  asset_path: darknode/deploy/bin/darknode
+                  asset_path: darknode/darknode-linux
                   asset_name: darknode
                   asset_content_type: application/octet-stream
-            - name: Upload Release Asset
-              uses: actions/upload-release-asset@v1
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              with:
-                  upload_url: ${{ steps.create_release.outputs.upload_url }}
-                  asset_path: darknode/deploy/bin/migration
-                  asset_name: migration
-                  asset_content_type: application/octet-stream
-
-
-                  
