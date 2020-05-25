@@ -20,12 +20,12 @@ jobs:
               env:
                   TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
               run: git config --global url."https://tok-kkk:${TOKEN}@github.com".insteadOf "https://github.com"
-            - name: Check out darknode release branch
+            - name: Check out darknode with the reference
               uses: actions/checkout@v2
               with:
                   repository: renproject/darknode
                   token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-                  ref: env.REF
+                  ref: ${{ env.REF }}
                   path: darknode
             - name: Build the binary
               run: |
