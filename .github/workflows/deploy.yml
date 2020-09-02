@@ -16,6 +16,7 @@ jobs:
                   cd $GITHUB_WORKSPACE
                   echo ::set-env name=REF::$(sed -n 's/^ref=//p' var.env)
                   echo ::set-env name=RELEASE::$(sed -n 's/^release=//p' var.env)
+                  echo ::set-env name=PRERELEASE::$(sed -n 's/^prerelease=//p' var.env)
             - name: Configure git for private modules
               env:
                   TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
@@ -45,7 +46,7 @@ jobs:
                   tag_name: ${{ env.RELEASE }}
                   release_name: ${{ env.RELEASE }}
                   draft: false
-                  prerelease: false
+                  prerelease: ${{ env.PRERELEASE }}
             - name: Upload Release Asset
               uses: actions/upload-release-asset@v1
               env:

@@ -9,7 +9,7 @@ Repo for publishing darknode releases before the `darknode` repo is public.
      e.g. `ref=release/0.2.12`, `ref=cdce9c5f629e8df011f31e65386e9da6784c806e`
    - `release`  name of the release which will be published in this repo.
       Make sure the release has a proper name and doesn't conflict with existing releases.
-   > Please aware the cli will not allow you to deploy an older version. The way how CLI compares versions is (1) compare the semver (2) compare the reset string in lexical order     
+   - `prerelease` whether the release will be a pre-release or not, should be either `true` or `false` 
 2. Commit and push the change to master branch 
 3. Wait for the CI to pass. 
 4. Make sure your CLI has version >= 3.0.10. Update darknode by running `darknode update DARKNODE-NAME --version YOUR-RELEASE-NAME` 
@@ -30,4 +30,6 @@ CI will only be trigger with commits to master. If you want to update the README
 
 # Known issue
 
-- If you make a release by giving a commit hash. The binary will not contain the correct branch name. (e.g. 1.0.11-HEAD-a355b0b) 
+- If you make a release by giving a commit hash. The binary will not contain the correct branch name. (e.g. 1.0.11-HEAD-a355b0b)
+- If you fill the var.env file with invalid values, it might not work.
+- If you try to create a release which already exists, it won't override the old one. 
