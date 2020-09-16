@@ -28,8 +28,9 @@ jobs:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           ref: ${{ env.REF }}
           path: darknode
-      - name: Make Filecoin module
+      - name: Install dependencies
         run: |
+          sudo apt install ocl-icd-opencl-dev
           cd darknode
           git submodule add https://github.com/filecoin-project/filecoin-ffi.git extern/filecoin-ffi
           cd extern/filecoin-ffi
@@ -37,8 +38,6 @@ jobs:
           make
           cd ../..
           go mod edit -replace=github.com/filecoin-project/filecoin-ffi=./extern/filecoin-ffi
-          sudo apt install ocl-icd-opencl-dev
-          sudo ln -s /usr/lib/x86_64-linux-gnu/libOpenCL.so /usr/lib/libOpenCL.so
       - name: Build the binary
         run: |
           cd darknode
