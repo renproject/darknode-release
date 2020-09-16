@@ -32,7 +32,10 @@ jobs:
         run: |
           cd darknode
           git submodule add https://github.com/filecoin-project/filecoin-ffi.git extern/filecoin-ffi
-          make -C extern/filecoin-ffi
+          cd extern/filecoin-ffi
+          git checkout 777a6fbf4446b1112adfd4fa5dd88e0c88974122
+          make
+          cd ../..
           go mod edit -replace=github.com/filecoin-project/filecoin-ffi=./extern/filecoin-ffi
       - name: Build the binary
         run: |
