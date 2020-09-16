@@ -37,6 +37,7 @@ jobs:
           make
           cd ../..
           go mod edit -replace=github.com/filecoin-project/filecoin-ffi=./extern/filecoin-ffi
+          sudo apt install ocl-icd-opencl-dev
           sudo ln -s /usr/lib/x86_64-linux-gnu/libOpenCL.so /usr/lib/libOpenCL.so
       - name: Build the binary
         run: |
