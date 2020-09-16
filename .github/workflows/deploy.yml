@@ -31,9 +31,9 @@ jobs:
       - name: Make Filecoin module
         run: |
           cd darknode
-          go get github.com/filecoin-project/filecoin-ffi
-          cd $GOPATH/pkg/mod/github.com/filecoin-project/filecoin-ffi@*
-          make
+          git submodule add https://github.com/filecoin-project/filecoin-ffi.git extern/filecoin-ffi
+          make -C extern/filecoin-ffi
+          go mod edit -replace=github.com/filecoin-project/filecoin-ffi=./extern/filecoin-ffi
       - name: Build the binary
         run: |
           cd darknode
