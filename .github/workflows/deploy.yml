@@ -28,10 +28,10 @@ jobs:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           ref: ${{ env.REF }}
           path: darknode
-      - name: Get modules
+      - name: Make Filecoin module
         run: |
           cd darknode
-          go get
+          go get github.com/filecoin-project/filecoin-ffi
           cd $GOPATH/pkg/mod/github.com/filecoin-project/filecoin-ffi@*
           make
       - name: Build the binary
