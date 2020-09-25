@@ -28,7 +28,7 @@ jobs:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           ref: ${{ env.REF }}
           path: darknode
-      - name: Install dependencies
+      - name: Install Filecoin dependencies
         run: |
           sudo apt install ocl-icd-opencl-dev
           cd darknode
@@ -38,6 +38,15 @@ jobs:
           make
           cd ../..
           go mod edit -replace=github.com/filecoin-project/filecoin-ffi=./extern/filecoin-ffi
+      - name: Install Terra dependencies
+        run: |
+          cd darknode
+          git submodule add http://github.com/terra-project/go-cosmwasm.git extern/go-cosmwasm
+          cd extern/go-cosmwasm
+          git checkout v0.10.1-terra
+          make build
+          cd ../..
+          go mod edit -replace=github.com/terra-project/go-cosmwasm=./extern/go-cosmwasm
       - name: Build the binary
         run: |
           cd darknode
