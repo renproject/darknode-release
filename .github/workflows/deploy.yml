@@ -12,6 +12,8 @@ jobs:
             - name: Check out code
               uses: actions/checkout@v2
             - name: Parse the reference
+              env:
+                  ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
               run: |
                   cd $GITHUB_WORKSPACE
                   echo ::set-env name=REF::$(sed -n 's/^ref=//p' var.env)
