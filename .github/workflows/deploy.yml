@@ -14,9 +14,9 @@ jobs:
       - name: Parse the reference
         run: |
           cd $GITHUB_WORKSPACE
-          echo ::set-env name=REF::$(sed -n 's/^ref=//p' var.env)
-          echo ::set-env name=RELEASE::$(sed -n 's/^release=//p' var.env)
-          echo ::set-env name=PRERELEASE::$(sed -n 's/^prerelease=//p' var.env)
+          echo "REF=$(sed -n 's/^ref=//p' var.env)" >> $GITHUB_ENV
+          echo "RELEASE=$(sed -n 's/^release=//p' var.env)" >> $GITHUB_ENV
+          echo "PRERELEASE=$(sed -n 's/^prerelease=//p' var.env)" >> $GITHUB_ENV
       - name: Configure git for private modules
         env:
           TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}

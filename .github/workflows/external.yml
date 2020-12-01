@@ -1,44 +1,44 @@
 name: external_deploy
 on: [repository_dispatch]
 jobs:
-    build:
-        runs-on: ubuntu-latest
-        steps:
-            - name: Fetch the tag name
-              run: |
-                  echo ${{ github.event.client_payload.tag }}
-                  echo ::set-env name=TAG::${{github.event.client_payload.tag}}
-            - name: Configure git for private modules
-              env:
-                  TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-              run: git config --global url."https://tok-kkk:${TOKEN}@github.com".insteadOf "https://github.com"
-            - name: Check out darknode release branch
-              uses: actions/checkout@v2
-              with:
-                  repository: renproject/darknode
-                  token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-                  ref:  ${{env.TAG}}
-                  path: darknode
-            - name: Build
-              run: |
-                  cd darknode
-                  make package
-            - name: Create Release
-              id: create_release
-              uses: actions/create-release@v1
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              with:
-                  tag_name: ${{ env.TAG }}
-                  release_name: ${{ env.TAG }}
-                  draft: false
-                  prerelease: false
-            - name: Upload Release Asset
-              uses: actions/upload-release-asset@v1
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              with:
-                  upload_url: ${{ steps.create_release.outputs.upload_url }}
-                  asset_path: darknode/deploy/bin/darknode
-                  asset_name: darknode
-                  asset_content_type: application/octet-stream
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch the tag name
+        run: |
+          echo ${{ github.event.client_payload.tag }}
+          echo "TAG=${{github.event.client_payload.tag}}" >> $GITHUB_ENV
+      - name: Configure git for private modules
+        env:
+          TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        run: git config --global url."https://tok-kkk:${TOKEN}@github.com".insteadOf "https://github.com"
+      - name: Check out darknode release branch
+        uses: actions/checkout@v2
+        with:
+          repository: renproject/darknode
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          ref: ${{env.TAG}}
+          path: darknode
+      - name: Build
+        run: |
+          cd darknode
+          make package
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.TAG }}
+          release_name: ${{ env.TAG }}
+          draft: false
+          prerelease: false
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: darknode/deploy/bin/darknode
+          asset_name: darknode
+          asset_content_type: application/octet-stream
