@@ -34,6 +34,7 @@ jobs:
           path: darknode
       - name: Install dependencies (Filecoin FFI)
         run: |
+          sudo apt-get update
           sudo apt install ocl-icd-opencl-dev
           cd darknode
           git submodule add https://github.com/filecoin-project/filecoin-ffi.git .extern/filecoin-ffi
