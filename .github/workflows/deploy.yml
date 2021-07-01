@@ -8,6 +8,9 @@ jobs:
   build:
     if: "!contains(github.event.head_commit.message, 'skipCI')"
     runs-on: ubuntu-latest
+    env:
+      FILECOIN_FFI_COMMIT: 8b97bd8230b77bd32f4f27e4766a6d8a03b4e801
+      SOLANA_FFI_COMMIT: 1f85d47b5331a2146834bbd28a51654134aedd7d
     steps:
       - name: Check out code
         uses: actions/checkout@v2
@@ -25,6 +28,14 @@ jobs:
         env:
           TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         run: git config --global url."https://tok-kkk:${TOKEN}@github.com".insteadOf "https://github.com"
+      - name: Cache extern dependencies
+        id: cache-extern
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-externs
+        with:
+          path: .extern
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ env.FILECOIN_FFI_COMMIT }}-${{ env.SOLANA_FFI_COMMIT }}
       - name: Check out darknode with the reference
         uses: actions/checkout@v2
         with:
@@ -32,25 +43,28 @@ jobs:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           ref: ${{ env.REF }}
           path: darknode
-      - name: Install dependencies (Filecoin FFI)
+      - name: Install dependency packages
         run: |
           sudo apt-get update
-          sudo apt install ocl-icd-opencl-dev hwloc libhwloc-dev
+          sudo apt-get install -y build-essential
+          sudo apt-get install -y jq mesa-opencl-icd ocl-icd-opencl-dev pkg-config libudev-dev hwloc libhwloc-dev
+      - name: Install dependencies (Filecoin FFI)
+        if: steps.cache-extern.outputs.cache-hit != 'true'
+        run: |
           cd darknode
           git submodule add https://github.com/filecoin-project/filecoin-ffi.git .extern/filecoin-ffi
           cd .extern/filecoin-ffi
-          git checkout 8b97bd8230b77bd32f4f27e4766a6d8a03b4e801
+          git checkout ${{ env.FILECOIN_FFI_COMMIT }}
           make
           cd ../..
           go mod edit -replace=github.com/filecoin-project/filecoin-ffi=./.extern/filecoin-ffi
       - name: Install dependencies (Solana FFI)
         run: |
-          sudo apt install libudev-dev libssl-dev
           go get -u github.com/xlab/c-for-go
           cd darknode
           git submodule add https://github.com/renproject/solana-ffi.git .extern/solana-ffi
           cd .extern/solana-ffi
-          git checkout 1f85d47b5331a2146834bbd28a51654134aedd7d
+          git checkout ${{ env.SOLANA_FFI_COMMIT }}
           make clean
           make
           cd ../..
