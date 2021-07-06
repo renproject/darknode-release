@@ -56,8 +56,6 @@ jobs:
           cd .extern/filecoin-ffi
           git checkout ${{ env.FILECOIN_FFI_COMMIT }}
           make
-          cd ../..
-          go mod edit -replace=github.com/filecoin-project/filecoin-ffi=./.extern/filecoin-ffi
       - name: Install dependencies (Solana FFI)
         run: |
           go get -u github.com/xlab/c-for-go
@@ -67,7 +65,10 @@ jobs:
           git checkout ${{ env.SOLANA_FFI_COMMIT }}
           make clean
           make
-          cd ../..
+      - name: Replace submodule extern with cached extern
+        run: |
+          cd darknode
+          go mod edit -replace=github.com/filecoin-project/filecoin-ffi=./.extern/filecoin-ffi
           go mod edit -replace=github.com/renproject/solana-ffi=./.extern/solana-ffi
       - name: Build the binary
         run: |
