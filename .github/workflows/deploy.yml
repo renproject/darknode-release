@@ -28,14 +28,6 @@ jobs:
         env:
           TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         run: git config --global url."https://tok-kkk:${TOKEN}@github.com".insteadOf "https://github.com"
-      - name: Cache extern dependencies
-        id: cache-extern
-        uses: actions/cache@v2
-        env:
-          cache-name: cache-externs
-        with:
-          path: .extern
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ env.FILECOIN_FFI_COMMIT }}-${{ env.SOLANA_FFI_COMMIT }}
       - name: Check out darknode with the reference
         uses: actions/checkout@v2
         with:
@@ -43,13 +35,29 @@ jobs:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           ref: ${{ env.REF }}
           path: darknode
+      - name: Cache filecoin and solana dependencies
+        id: cache-extern
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-externs
+        with:
+          path: darknode/.extern
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ env.FILECOIN_FFI_COMMIT }}-${{ env.SOLANA_FFI_COMMIT }}
+      - name: Cache golang packages
+        id: cache-packages
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-packages
+        with:
+          path: ~/go
+          key: ${{ runner.os }}-gomod-${{ hashFiles('.darknode/go.sum') }}
       - name: Install dependency packages
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential
           sudo apt-get install -y jq mesa-opencl-icd ocl-icd-opencl-dev pkg-config libudev-dev hwloc libhwloc-dev
       - name: Install dependencies (Filecoin FFI)
-        # if: steps.cache-extern.outputs.cache-hit != 'true'
+        if: steps.cache-extern.outputs.cache-hit != 'true'
         run: |
           cd darknode
           git submodule add https://github.com/filecoin-project/filecoin-ffi.git .extern/filecoin-ffi
@@ -57,7 +65,7 @@ jobs:
           git checkout ${{ env.FILECOIN_FFI_COMMIT }}
           make
       - name: Install dependencies (Solana FFI)
-        # if: steps.cache-extern.outputs.cache-hit != 'true'
+        if: steps.cache-extern.outputs.cache-hit != 'true'
         run: |
           go get -u github.com/xlab/c-for-go
           cd darknode
