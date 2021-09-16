@@ -1,60 +1,109 @@
 name: deploy
 on:
-    push:
-        branches:
-          - master
+  push:
+    branches:
+      - feat/darknode-0.4.0
 
 jobs:
-    build:
-        if: "!contains(github.event.head_commit.message, 'skipCI')"
-        runs-on: ubuntu-latest
-        steps:
-            - name: Check out code
-              uses: actions/checkout@v2
-            - name: Parse the reference
-              env:
-                  ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
-              run: |
-                  cd $GITHUB_WORKSPACE
-                  echo ::set-env name=REF::$(sed -n 's/^ref=//p' var.env)
-                  echo ::set-env name=RELEASE::$(sed -n 's/^release=//p' var.env)
-                  echo ::set-env name=PRERELEASE::$(sed -n 's/^prerelease=//p' var.env)
-            - name: Configure git for private modules
-              env:
-                  TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-              run: git config --global url."https://tok-kkk:${TOKEN}@github.com".insteadOf "https://github.com"
-            - name: Check out darknode with the reference
-              uses: actions/checkout@v2
-              with:
-                  repository: renproject/darknode
-                  token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-                  ref: ${{ env.REF }}
-                  path: darknode
-            - name: Build the binary
-              run: |
-                  cd darknode
-                  MAIN_VERSION=$(cat ./VERSION | tr -d "[:space:]")
-                  BRANCH=$(git branch | grep \* | cut -d ' ' -f2)
-                  COMMIT_HASH=$(git describe --always --long)
-                  FULL_VERSION=${MAIN_VERSION}-${BRANCH}-${COMMIT_HASH}
-                  LDFLAGS="-s -w -X main.version=${FULL_VERSION}"
-                  go build -o darknode-linux -ldflags="${LDFLAGS}" ./cmd/darknode
-            - name: Create Release
-              id: create_release
-              uses: actions/create-release@v1
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              with:
-                  tag_name: ${{ env.RELEASE }}
-                  release_name: ${{ env.RELEASE }}
-                  draft: false
-                  prerelease: ${{ env.PRERELEASE }}
-            - name: Upload Release Asset
-              uses: actions/upload-release-asset@v1
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              with:
-                  upload_url: ${{ steps.create_release.outputs.upload_url }}
-                  asset_path: darknode/darknode-linux
-                  asset_name: darknode
-                  asset_content_type: application/octet-stream
+  build:
+    if: "!contains(github.event.head_commit.message, 'skipCI')"
+    runs-on: ubuntu-latest
+    env:
+      FILECOIN_FFI_COMMIT: 8b97bd8230b77bd32f4f27e4766a6d8a03b4e801
+      SOLANA_FFI_COMMIT: 1f85d47b5331a2146834bbd28a51654134aedd7d
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: "1.16.6"
+      - name: Parse the reference
+        run: |
+          cd $GITHUB_WORKSPACE
+          echo "REF=$(sed -n 's/^ref=//p' var.env)" >> $GITHUB_ENV
+          echo "RELEASE=$(sed -n 's/^release=//p' var.env)" >> $GITHUB_ENV
+          echo "PRERELEASE=$(sed -n 's/^prerelease=//p' var.env)" >> $GITHUB_ENV
+      - name: Configure git for private modules
+        env:
+          TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        run: git config --global url."https://tok-kkk:${TOKEN}@github.com".insteadOf "https://github.com"
+      - name: Check out darknode with the reference
+        uses: actions/checkout@v2
+        with:
+          repository: renproject/darknode
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          ref: ${{ env.REF }}
+          path: darknode
+      - name: Cache filecoin and solana dependencies
+        id: cache-extern
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-externs
+        with:
+          path: darknode/.extern
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ env.FILECOIN_FFI_COMMIT }}-${{ env.SOLANA_FFI_COMMIT }}
+      - name: Cache golang packages
+        id: cache-packages
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-packages
+        with:
+          path: ~/go
+          key: ${{ runner.os }}-gomod-${{ hashFiles('.darknode/go.sum') }}
+      - name: Install dependency packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential
+          sudo apt-get install -y jq mesa-opencl-icd ocl-icd-opencl-dev pkg-config libudev-dev hwloc libhwloc-dev
+      - name: Install dependencies (Filecoin FFI)
+        if: steps.cache-extern.outputs.cache-hit != 'true'
+        run: |
+          cd darknode
+          git submodule add https://github.com/filecoin-project/filecoin-ffi.git .extern/filecoin-ffi
+          cd .extern/filecoin-ffi
+          git checkout ${{ env.FILECOIN_FFI_COMMIT }}
+          make
+      - name: Install dependencies (Solana FFI)
+        if: steps.cache-extern.outputs.cache-hit != 'true'
+        run: |
+          go get -u github.com/xlab/c-for-go
+          cd darknode
+          git submodule add https://github.com/renproject/solana-ffi.git .extern/solana-ffi
+          cd .extern/solana-ffi
+          git checkout ${{ env.SOLANA_FFI_COMMIT }}
+          make clean
+          make
+      - name: Replace submodule extern with cached extern
+        run: |
+          cd darknode
+          go mod edit -replace=github.com/filecoin-project/filecoin-ffi=./.extern/filecoin-ffi
+          go mod edit -replace=github.com/renproject/solana-ffi=./.extern/solana-ffi
+      - name: Build the binary
+        run: |
+          cd darknode
+          MAIN_VERSION=$(cat ./VERSION | tr -d "[:space:]")
+          BRANCH=$(git branch | grep \* | cut -d ' ' -f2)
+          COMMIT_HASH=$(git describe --always --long)
+          FULL_VERSION=${MAIN_VERSION}-${BRANCH}-${COMMIT_HASH}
+          LDFLAGS="-s -w -X main.version=${FULL_VERSION}"
+          go build -o darknode-linux -ldflags="${LDFLAGS}" ./cmd/darknode
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.RELEASE }}
+          release_name: ${{ env.RELEASE }}
+          draft: false
+          prerelease: ${{ env.PRERELEASE }}
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: darknode/darknode-linux
+          asset_name: darknode
+          asset_content_type: application/octet-stream
