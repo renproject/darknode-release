@@ -87,7 +87,7 @@ jobs:
           COMMIT_HASH=$(git describe --always --long)
           FULL_VERSION=${MAIN_VERSION}-${BRANCH}-${COMMIT_HASH}
           LDFLAGS="-s -w -X main.version=${FULL_VERSION}"
-          go build -o darknode-linux -ldflags="${LDFLAGS}" ./cmd/darknode
+          go build -o darknode-linux -ldflags="${LDFLAGS}" ./cmd/recovery
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
